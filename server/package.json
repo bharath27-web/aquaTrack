@@ -1,0 +1,37 @@
+{
+  "name": "aquatrack-server",
+  "version": "1.0.0",
+  "description": "AquaTrack - Water Supply Delivery & Tracking Management System API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "seed": "node seed.js"
+  },
+  "keywords": [
+    "aquatrack",
+    "water",
+    "delivery",
+    "management"
+  ],
+  "author": "AquaTrack",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.2",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "express-validator": "^7.3.2",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.10.3",
+    "morgan": "^1.12.1",
+    "multer": "^2.4.0",
+    "socket.io": "^4.8.4",
+    "uuid": "^14.0.2"
+  }
+}

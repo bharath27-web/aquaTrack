@@ -325,7 +325,7 @@ const AdminSettingsPage = () => {
         ) : (
           <div className="flex items-center gap-2 text-sm text-danger p-3 bg-red-50 rounded-xl">
             <AlertCircle size={16} />
-            Could not reach the backend API. Make sure the server is running on port 5000.
+            Could not reach the backend API. Make sure the server is running and accessible.
           </div>
         )}
       </Section>
@@ -336,8 +336,8 @@ const AdminSettingsPage = () => {
           {[
             { label: 'Application', value: 'AquaTrack' },
             { label: 'Version', value: '1.0.0' },
-            { label: 'Backend URL', value: 'http://localhost:5000' },
-            { label: 'Frontend URL', value: 'http://localhost:5173' },
+            { label: 'Backend URL', value: import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:5000' },
+            { label: 'Frontend URL', value: typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://localhost:5173' },
             { label: 'Map Provider', value: 'Leaflet + OpenStreetMap' },
             { label: 'Real-time', value: 'Socket.IO' },
           ].map(({ label, value }) => (

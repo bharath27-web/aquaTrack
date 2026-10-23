@@ -10,11 +10,62 @@ const path = require('path');
 
 dotenv.config();
 
+const parseAllowedOrigins = () => {
+  const raw = process.env.CLIENT_URL || 'http://localhost:5173';
+  return raw
+    .split(',')
+    .map((url) => url.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+};
+
+const isOriginAllowed = (origin) => {
+  // Allow non-browser requests (mobile apps, curl, Postman, server health probes)
+  if (!origin) return true;
+
+  const normalized = origin.trim().replace(/\/+$/, '');
+  const configured = parseAllowedOrigins();
+
+  if (configured.includes(normalized) || configured.includes('*')) {
+    return true;
+  }
+
+  // Allow localhost during local development
+  if (process.env.NODE_ENV !== 'production') {
+    if (normalized.startsWith('http://localhost:') || normalized.startsWith('http://127.0.0.1:')) {
+      return true;
+    }
+  }
+
+  // Securely allow Vercel deployment and preview subdomains (*.vercel.app)
+  try {
+    const parsed = new URL(normalized);
+    if (parsed.protocol === 'https:' && parsed.hostname.endsWith('.vercel.app')) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
+};
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+};
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: corsOptions.origin,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -22,10 +73,7 @@ const io = new Server(server, {
 
 // Middleware
 app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true,
-}));
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('dev'));
@@ -50,6 +98,19 @@ app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/ratings', require('./routes/ratings'));
 app.use('/api/payments', require('./routes/payments'));
+
+// Root status route
+app.get('/', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  res.json({
+    name: 'AquaTrack API',
+    version: '1.0.0',
+    status: 'running',
+    database: dbStatus,
+    health: '/api/health',
+    timestamp: new Date(),
+  });
+});
 
 // Health check
 app.get('/api/health', (req, res) => {
